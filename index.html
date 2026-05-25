@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SME Pulse — Financial Intelligence Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* Ensure AI chat visible on load for desktop */
+    .ai-chat { opacity: 1; }
+  </style>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+</head>
+<body>
+
+<!-- Background ambience -->
+<div class="bg-canvas" aria-hidden="true">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="grid-overlay"></div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  SIDEBAR                               -->
+<!-- ═══════════════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-mark">S</span>
+    <span class="logo-text">SME<em>Pulse</em></span>
+  </div>
+
+  <nav class="sidebar-nav" aria-label="Main navigation">
+    <a href="#" class="nav-item active" data-tooltip="Dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <a href="#" class="nav-item" data-tooltip="Analytics">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>Analytics</span>
+    </a>
+    <a href="#" class="nav-item" data-tooltip="Portfolio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      <span>Portfolio</span>
+    </a>
+    <a href="#" class="nav-item" data-tooltip="Transactions">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      <span>Transactions</span>
+    </a>
+    <a href="#" class="nav-item" data-tooltip="Cards">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      <span>Cards</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-bottom">
+    <a href="#" class="nav-item" data-tooltip="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      <span>Settings</span>
+    </a>
+    <div class="sidebar-avatar">
+      <div class="avatar-ring">
+        <img src="https://api.dicebear.com/7.x/lorelei/svg?seed=pulse&backgroundColor=0d1b2a" alt="User avatar" />
+      </div>
+      <div class="avatar-info">
+        <span class="avatar-name">Alex Morgan</span>
+        <span class="avatar-role">Pro Plan</span>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Hamburger -->
+<button class="hamburger" id="hamburger" aria-label="Toggle menu">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  MAIN CONTENT                          -->
+<!-- ═══════════════════════════════════════ -->
+<main class="main-content" id="main">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 class="page-title">Financial Overview</h1>
+      <p class="page-subtitle">Monday, 26 May 2026</p>
+    </div>
+    <div class="topbar-right">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search transactions…" aria-label="Search" />
+      </div>
+      <button class="icon-btn" aria-label="Notifications">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span class="badge">3</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- DASHBOARD GRID -->
+  <div class="dashboard-grid">
+
+    <!-- ── COLUMN 1: CARD + RECENT ACTIVITIES ── -->
+    <section class="col col-1">
+
+      <!-- Bank Card -->
+      <div class="card bank-card" data-tilt>
+        <div class="bank-card-header">
+          <div class="card-chip">
+            <div class="chip-lines"></div>
+          </div>
+          <div class="card-brand">
+            <span class="brand-dots">
+              <span></span><span></span>
+            </span>
+          </div>
+        </div>
+        <div class="bank-card-balance">
+          <p class="balance-label">Total Balance</p>
+          <h2 class="balance-amount" data-count="8244.00">$0.00</h2>
+        </div>
+        <div class="bank-card-footer">
+          <p class="card-number">2233 •••• •••• 9182</p>
+          <div class="card-meta">
+            <span class="card-holder">A. Morgan</span>
+            <span class="card-exp">09/28</span>
+          </div>
+        </div>
+        <div class="card-glow" aria-hidden="true"></div>
+      </div>
+
+      <!-- Recent Activities -->
+      <div class="card activities-card">
+        <div class="card-head">
+          <h3>Recent Activities</h3>
+          <button class="text-btn">See all</button>
+        </div>
+        <ul class="activity-list" id="activityList">
+          <li class="activity-item" data-amount="-14.00" data-status="debit">
+            <div class="activity-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+            </div>
+            <div class="activity-info">
+              <span class="activity-name">Spotify</span>
+              <span class="activity-cat">Music Platform</span>
+            </div>
+            <span class="activity-amount debit">-$14.00</span>
+          </li>
+          <li class="activity-item" data-amount="-20.00" data-status="debit">
+            <div class="activity-icon apple">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            </div>
+            <div class="activity-info">
+              <span class="activity-name">Apple Music</span>
+              <span class="activity-cat">Subscription</span>
+            </div>
+            <span class="activity-amount debit">-$20.00</span>
+          </li>
+          <li class="activity-item" data-amount="+350.00" data-status="credit">
+            <div class="activity-icon credit">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            </div>
+            <div class="activity-info">
+              <span class="activity-name">Freelance</span>
+              <span class="activity-cat">Design Project</span>
+            </div>
+            <span class="activity-amount credit">+$350.00</span>
+          </li>
+          <li class="activity-item" data-amount="-89.99" data-status="debit">
+            <div class="activity-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </div>
+            <div class="activity-info">
+              <span class="activity-name">Adobe CC</span>
+              <span class="activity-cat">Software</span>
+            </div>
+            <span class="activity-amount debit">-$89.99</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ── COLUMN 2: STATS + CHART ── -->
+    <section class="col col-2">
+      <!-- KPI Row -->
+      <div class="kpi-row">
+        <div class="kpi-card" data-tilt>
+          <div class="kpi-icon kpi-income">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          </div>
+          <div class="kpi-body">
+            <p class="kpi-label">Total Income</p>
+            <h3 class="kpi-value" data-count="12480">$0</h3>
+            <span class="kpi-change positive">+8.2%</span>
+          </div>
+        </div>
+        <div class="kpi-card" data-tilt>
+          <div class="kpi-icon kpi-expense">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+          </div>
+          <div class="kpi-body">
+            <p class="kpi-label">Total Expenses</p>
+            <h3 class="kpi-value" data-count="4236">$0</h3>
+            <span class="kpi-change negative">-2.4%</span>
+          </div>
+        </div>
+        <div class="kpi-card" data-tilt>
+          <div class="kpi-icon kpi-savings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <div class="kpi-body">
+            <p class="kpi-label">Savings Rate</p>
+            <h3 class="kpi-value" data-count="66" data-suffix="%">0%</h3>
+            <span class="kpi-change positive">+5.1%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revenue Chart -->
+      <div class="card chart-card">
+        <div class="card-head">
+          <div>
+            <h3>Revenue Analytics</h3>
+            <p class="card-subtitle">Cash flow · Last 12 months</p>
+          </div>
+          <div class="chart-tabs">
+            <button class="tab-btn active" data-period="12m">12M</button>
+            <button class="tab-btn" data-period="6m">6M</button>
+            <button class="tab-btn" data-period="3m">3M</button>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── COLUMN 3: INVESTMENT + SEND MONEY ── -->
+    <section class="col col-3">
+
+      <!-- Investment Card -->
+      <div class="card investment-card">
+        <div class="card-head">
+          <h3>Investment</h3>
+          <span class="live-badge">
+            <span class="live-dot"></span>Live
+          </span>
+        </div>
+        <div class="crypto-grid">
+          <div class="crypto-item" data-tilt>
+            <div class="crypto-header">
+              <div class="crypto-icon btc">₿</div>
+              <div class="crypto-info">
+                <span class="crypto-name">BTC/USD</span>
+                <span class="crypto-change positive">+2.1%</span>
+              </div>
+            </div>
+            <h4 class="crypto-price" data-count="64100">$0</h4>
+            <div class="mini-chart-wrap">
+              <canvas id="btcMini"></canvas>
+            </div>
+          </div>
+          <div class="crypto-item" data-tilt>
+            <div class="crypto-header">
+              <div class="crypto-icon eth">Ξ</div>
+              <div class="crypto-info">
+                <span class="crypto-name">ETH/USD</span>
+                <span class="crypto-change positive">+4.5%</span>
+              </div>
+            </div>
+            <h4 class="crypto-price" data-count="4120.50">$0</h4>
+            <div class="mini-chart-wrap">
+              <canvas id="ethMini"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Burn Rate donut -->
+        <div class="burn-wrap">
+          <div class="burn-chart-wrap">
+            <canvas id="burnChart"></canvas>
+            <div class="burn-center">
+              <span class="burn-pct">66%</span>
+              <span class="burn-label">Runway</span>
+            </div>
+          </div>
+          <div class="burn-legend">
+            <div class="legend-item">
+              <span class="legend-dot teal"></span>
+              <span>Remaining</span>
+              <strong>$8.2k</strong>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot muted"></span>
+              <span>Burn Rate</span>
+              <strong>$4.2k</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Send Money -->
+      <div class="card send-card">
+        <div class="card-head">
+          <h3>Send Money</h3>
+        </div>
+        <div class="recipients">
+          <button class="recipient-btn add-btn" aria-label="Add recipient">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <button class="recipient-btn active" data-name="Sara" aria-label="Send to Sara">
+            <img src="https://api.dicebear.com/7.x/lorelei/svg?seed=Sara&backgroundColor=1e3a4a" alt="Sara" />
+          </button>
+          <button class="recipient-btn" data-name="Mike" aria-label="Send to Mike">
+            <img src="https://api.dicebear.com/7.x/lorelei/svg?seed=Mike&backgroundColor=1e3a4a" alt="Mike" />
+          </button>
+          <button class="recipient-btn" data-name="Lena" aria-label="Send to Lena">
+            <img src="https://api.dicebear.com/7.x/lorelei/svg?seed=Lena&backgroundColor=1e3a4a" alt="Lena" />
+          </button>
+        </div>
+        <div class="send-amount-wrap">
+          <p class="send-to-label">To: <strong id="sendToName">Sara</strong></p>
+          <div class="send-input-group">
+            <span class="currency-symbol">$</span>
+            <input type="number" class="send-input" id="sendInput" value="266" min="1" aria-label="Amount to send" />
+          </div>
+        </div>
+        <button class="send-btn magnetic" id="sendBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Send Money
+        </button>
+      </div>
+    </section>
+
+  </div><!-- /dashboard-grid -->
+</main>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  AI CHATBOT                            -->
+<!-- ═══════════════════════════════════════ -->
+<div class="ai-chat" id="aiChat">
+  <div class="chat-header" id="chatHeader">
+    <div class="chat-title">
+      <div class="ai-avatar-sm">
+        <span>S</span>
+        <span class="ai-status-dot"></span>
+      </div>
+      <div>
+        <p class="chat-name">SME Pulse AI</p>
+        <p class="chat-online">Online · Ready</p>
+      </div>
+    </div>
+    <button class="chat-toggle" id="chatToggle" aria-label="Minimize chat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+    </button>
+  </div>
+
+  <div class="chat-body" id="chatBody">
+    <div class="chat-messages" id="chatMessages">
+      <div class="msg ai-msg" data-time="Just now">
+        <p>مرحباً! أنا مساعدك المالي الذكي. كيف أساعدك في تحليل سيولتك اليوم؟ 💡</p>
+      </div>
+    </div>
+    <div class="typing-indicator" id="typingIndicator" aria-live="polite">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <div class="chat-footer">
+    <div class="chat-input-wrap">
+      <input type="text" class="chat-input" id="chatInput" placeholder="Ask about Burn Rate, Runway…" aria-label="Chat message" />
+      <button class="chat-send-btn" id="chatSendBtn" aria-label="Send message">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Chat FAB (mobile / minimized) -->
+<button class="chat-fab" id="chatFab" aria-label="Open AI assistant">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+  <span class="fab-badge">AI</span>
+</button>
+
+<script src="js/script.js"></script>
+</body>
+</html>
