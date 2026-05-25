@@ -1,394 +1,626 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SME Pulse — Financial Intelligence Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SME PULSE — Dashboard</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    /* Ensure AI chat visible on load for desktop */
-    .ai-chat { opacity: 1; }
+    /* ═══════════════════════════════════════════════
+       SME PULSE — FINANCIAL INTELLIGENCE DASHBOARD
+       ═══════════════════════════════════════════════ */
+
+    /* ── 1. TOKENS ─────────────────────────────── */
+    :root {
+      --bg-base:        #050d18;
+      --bg-deep:        #070f1e;
+      --bg-card:        rgba(10, 22, 40, 0.72);
+      --bg-card-hover:  rgba(14, 28, 50, 0.88);
+      --glass:          rgba(255,255,255,0.04);
+      --glass-border:   rgba(255,255,255,0.08);
+
+      --teal:           #00e5c8;
+      --teal-dim:       rgba(0, 229, 200, 0.18);
+      --teal-glow:      rgba(0, 229, 200, 0.35);
+      --cyan:           #18c8f5;
+      --cyan-dim:       rgba(24, 200, 245, 0.15);
+      --neon-green:     #05ffa1;
+      --neon-red:       #ff4d6d;
+      --neon-orange:    #ff9f43;
+      --gold:           #f7c84b;
+
+      --text-primary:   #e8f0fe;
+      --text-secondary: #8ba4c0;
+      --text-muted:     #445a73;
+
+      --sidebar-w:      72px;
+      --sidebar-w-expanded: 220px;
+      --radius-card:    20px;
+      --radius-sm:      12px;
+
+      --shadow-card:    0 8px 40px rgba(0,0,0,0.45);
+      --shadow-glow:    0 0 30px rgba(0,229,200,0.2);
+
+      --transition:     0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --spring:         0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+      --font-display:   'Syne', sans-serif;
+      --font-mono:      'Space Mono', monospace;
+      --font-body:      'DM Sans', sans-serif;
+    }
+
+    /* ── 2. RESET & BASE ───────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { text-decoration: none; color: inherit; }
+    ul { list-style: none; }
+    img { display: block; max-width: 100%; }
+    button { border: none; background: none; cursor: pointer; font-family: var(--font-body); }
+    input { font-family: var(--font-body); }
+
+    /* ── 3. BACKGROUND CANVAS ──────────────────── */
+    .bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.35;
+      animation: blobDrift 20s ease-in-out infinite alternate;
+    }
+    .blob-1 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(0,229,200,0.4), transparent 70%);
+      top: -200px; left: -100px;
+      animation-duration: 22s;
+    }
+    .blob-2 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(24,200,245,0.3), transparent 70%);
+      bottom: -150px; right: -100px;
+      animation-duration: 18s;
+      animation-direction: alternate-reverse;
+    }
+    .blob-3 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(5,255,161,0.15), transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      animation-duration: 25s;
+    }
+    @keyframes blobDrift {
+      0%   { transform: translate(0, 0) scale(1); }
+      50%  { transform: translate(40px, -30px) scale(1.05); }
+      100% { transform: translate(-20px, 20px) scale(0.95); }
+    }
+    .grid-overlay {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,200,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,200,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* ── 4. LAYOUT ─────────────────────────────── */
+    .sidebar {
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      width: var(--sidebar-w);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 0 20px;
+      background: rgba(6, 14, 26, 0.85);
+      border-right: 1px solid var(--glass-border);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      transition: width var(--transition);
+      overflow: hidden;
+    }
+    .sidebar:hover, .sidebar.open {
+      width: var(--sidebar-w-expanded);
+    }
+    .main-content {
+      margin-left: var(--sidebar-w);
+      min-height: 100vh;
+      padding: 28px 24px;
+      position: relative;
+      z-index: 1;
+      transition: margin-left var(--transition);
+    }
+
+    /* ── 5. SIDEBAR INTERNALS ──────────────────── */
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 0 16px;
+      margin-bottom: 36px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .logo-mark {
+      min-width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--teal), var(--cyan));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 800;
+      color: #050d18;
+      box-shadow: 0 0 20px var(--teal-glow);
+      flex-shrink: 0;
+    }
+    .logo-text {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+    .logo-text em { color: var(--teal); font-style: normal; }
+    .sidebar:hover .logo-text, .sidebar.open .logo-text { opacity: 1; }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 100%;
+      padding: 0 10px;
+      flex: 1;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      color: var(--text-muted);
+      transition: all var(--transition);
+      white-space: nowrap;
+      position: relative;
+      overflow: hidden;
+    }
+    .nav-item::before {
+      content: ''; position: absolute; inset: 0;
+      background: var(--teal-dim); border-radius: inherit;
+      opacity: 0; transform: scale(0.8); transition: all var(--transition);
+    }
+    .nav-item:hover { color: var(--text-primary); }
+    .nav-item:hover::before { opacity: 1; transform: scale(1); }
+    .nav-item.active { color: var(--teal); }
+    .nav-item.active::before { opacity: 1; transform: scale(1); background: var(--teal-dim); }
+    .nav-item.active::after {
+      content: ''; position: absolute; left: 0; top: 25%; bottom: 25%;
+      width: 3px; border-radius: 0 3px 3px 0;
+      background: var(--teal); box-shadow: 0 0 10px var(--teal);
+    }
+    .nav-item svg { width: 20px; height: 20px; flex-shrink: 0; position: relative; z-index: 1; }
+    .nav-item span {
+      font-size: 14px; font-weight: 500; opacity: 0; transition: opacity var(--transition);
+      position: relative; z-index: 1;
+    }
+    .sidebar:hover .nav-item span, .sidebar.open .nav-item span { opacity: 1; }
+
+    .sidebar-bottom { width: 100%; padding: 0 10px; display: flex; flex-direction: column; gap: 8px; }
+    .sidebar-avatar {
+      display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+      border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border);
+      overflow: hidden; white-space: nowrap; margin-top: 8px;
+    }
+    .avatar-ring {
+      min-width: 36px; height: 36px; border-radius: 50%;
+      border: 2px solid var(--teal); overflow: hidden; flex-shrink: 0;
+      box-shadow: 0 0 12px var(--teal-glow);
+    }
+    .avatar-info { opacity: 0; transition: opacity var(--transition); }
+    .sidebar:hover .avatar-info, .sidebar.open .avatar-info { opacity: 1; }
+    .avatar-name { display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .avatar-role { display: block; font-size: 11px; color: var(--teal); }
+
+    .hamburger {
+      display: none; position: fixed; top: 18px; left: 16px; z-index: 200;
+      flex-direction: column; gap: 5px; padding: 8px; background: var(--bg-card);
+      border-radius: 10px; border: 1px solid var(--glass-border);
+    }
+    .hamburger span {
+      display: block; width: 22px; height: 2px;
+      background: var(--text-primary); border-radius: 2px; transition: all var(--transition);
+    }
+    .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+    /* ── 6. TOPBAR ─────────────────────────────── */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px; flex-wrap: wrap; gap: 16px;
+    }
+    .page-title {
+      font-family: var(--font-display); font-size: clamp(20px, 3vw, 28px);
+      font-weight: 800; background: linear-gradient(135deg, var(--text-primary), var(--teal));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .search-wrap {
+      display: flex; align-items: center; gap: 10px; background: var(--bg-card);
+      border: 1px solid var(--glass-border); border-radius: 12px; padding: 10px 16px;
+      backdrop-filter: blur(12px); transition: all var(--transition);
+    }
+    .search-wrap:focus-within { border-color: var(--teal); box-shadow: 0 0 0 3px var(--teal-dim); }
+    .search-wrap svg { width: 16px; height: 16px; color: var(--text-muted); flex-shrink: 0; }
+    .search-wrap input {
+      background: none; border: none; outline: none; color: var(--text-primary);
+      font-size: 13px; width: 180px;
+    }
+    .search-wrap input::placeholder { color: var(--text-muted); }
+    .icon-btn {
+      width: 42px; height: 42px; background: var(--bg-card); border: 1px solid var(--glass-border);
+      border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary); position: relative; backdrop-filter: blur(12px); transition: all var(--transition);
+    }
+    .icon-btn:hover { border-color: var(--teal); color: var(--teal); box-shadow: 0 0 16px var(--teal-dim); }
+    .icon-btn svg { width: 18px; height: 18px; }
+    .badge {
+      position: absolute; top: -4px; right: -4px; width: 16px; height: 16px;
+      background: var(--neon-red); border-radius: 50%; font-size: 9px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; color: #fff;
+      box-shadow: 0 0 8px rgba(255,77,109,0.6);
+    }
+
+    /* ── 7. DASHBOARD GRID & CARDS ─────────────── */
+    .dashboard-grid { display: grid; grid-template-columns: 340px 1fr 320px; gap: 20px; align-items: start; }
+    .col { display: flex; flex-direction: column; gap: 20px; }
+    .card {
+      background: var(--bg-card); border: 1px solid var(--glass-border);
+      border-radius: var(--radius-card); padding: 24px;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      box-shadow: var(--shadow-card);
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+      position: relative; overflow: hidden;
+    }
+    .card::before {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      background: linear-gradient(135deg, rgba(0,229,200,0.04), transparent 60%); pointer-events: none;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-card), var(--shadow-glow); border-color: rgba(0,229,200,0.15); }
+    .card-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+    .card-head h3 { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--text-primary); }
+    .card-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+    /* ── 8. BANK CARD ──────────────────────────── */
+    .bank-card {
+      background: linear-gradient(135deg, #0e2640 0%, #0a1e38 40%, #061428 100%);
+      border-color: rgba(0,229,200,0.2); padding: 28px; min-height: 200px;
+      display: flex; flex-direction: column; justify-content: space-between; cursor: pointer;
+    }
+    .bank-card-header { display: flex; align-items: center; justify-content: space-between; }
+    .card-chip {
+      width: 38px; height: 28px; background: linear-gradient(135deg, var(--gold), #c9a227);
+      border-radius: 6px; position: relative; overflow: hidden;
+    }
+    .brand-dots { display: flex; gap: -8px; }
+    .brand-dots span { width: 28px; height: 28px; border-radius: 50%; display: block; }
+    .brand-dots span:first-child { background: rgba(255,159,67,0.85); margin-right: -10px; }
+    .brand-dots span:last-child { background: rgba(255,77,109,0.7); }
+    .balance-label { font-size: 12px; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 6px; }
+    .balance-amount {
+      font-family: var(--font-mono); font-size: clamp(28px, 4vw, 38px); font-weight: 700;
+      color: var(--text-primary); letter-spacing: -0.02em; text-shadow: 0 0 30px rgba(0,229,200,0.3);
+    }
+    .bank-card-footer { display: flex; align-items: flex-end; justify-content: space-between; }
+    .card-number { font-family: var(--font-mono); font-size: 14px; color: var(--text-secondary); letter-spacing: 0.15em; }
+    .card-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+    .card-holder, .card-exp { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+    /* ── 9. ACTIVITIES ────────────────────────── */
+    .activities-card { flex: 1; }
+    .text-btn { font-size: 13px; color: var(--teal); font-weight: 500; transition: opacity var(--transition); }
+    .text-btn:hover { opacity: 0.7; }
+    .activity-list { display: flex; flex-direction: column; gap: 16px; }
+    .activity-item {
+      display: flex; align-items: center; gap: 14px; padding: 12px 14px;
+      border-radius: var(--radius-sm); background: var(--glass); border: 1px solid transparent;
+      transition: all var(--transition); cursor: pointer;
+    }
+    .activity-item:hover { background: var(--teal-dim); border-color: var(--teal-glow); }
+    .activity-icon {
+      width: 40px; height: 40px; border-radius: 12px; background: rgba(0,229,200,0.12);
+      display: flex; align-items: center; justify-content: center; color: var(--teal); flex-shrink: 0;
+    }
+    .activity-icon svg { width: 18px; height: 18px; }
+    .activity-icon.apple { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+    .activity-icon.credit { background: rgba(5,255,161,0.12); color: var(--neon-green); }
+    .activity-info { flex: 1; min-width: 0; }
+    .activity-name { display: block; font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .activity-cat { display: block; font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .activity-amount { font-family: var(--font-mono); font-size: 14px; font-weight: 700; flex-shrink: 0; }
+    .activity-amount.debit  { color: var(--neon-red); }
+    .activity-amount.credit { color: var(--neon-green); }
+
+    /* ── 10. KPI CARDS ─────────────────────────── */
+    .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .kpi-card {
+      background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: var(--radius-sm);
+      padding: 18px 16px; display: flex; align-items: flex-start; gap: 14px;
+      backdrop-filter: blur(16px); transition: all var(--transition); cursor: pointer; position: relative;
+    }
+    .kpi-card:hover { border-color: rgba(0,229,200,0.2); box-shadow: 0 4px 24px rgba(0,0,0,0.4); transform: translateY(-2px); }
+    .kpi-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .kpi-icon svg { width: 18px; height: 18px; }
+    .kpi-income  { background: rgba(5,255,161,0.12);  color: var(--neon-green); }
+    .kpi-expense { background: rgba(255,77,109,0.12);  color: var(--neon-red); }
+    .kpi-savings { background: rgba(0,229,200,0.12);   color: var(--teal); }
+    .kpi-body { flex: 1; }
+    .kpi-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+    .kpi-value { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+    .kpi-change { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 20px; }
+    .kpi-change.positive { background: rgba(5,255,161,0.12); color: var(--neon-green); }
+    .kpi-change.negative { background: rgba(255,77,109,0.12); color: var(--neon-red); }
+
+    /* ── 11. CHART & INVESTMENTS ───────────────── */
+    .chart-card { flex: 1; }
+    .chart-wrap { position: relative; height: 220px; margin-top: 8px; }
+    .crypto-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .crypto-item {
+      background: rgba(0,0,0,0.25); border: 1px solid var(--glass-border); border-radius: var(--radius-sm);
+      padding: 16px 14px 12px; transition: all var(--transition); cursor: pointer;
+    }
+    .crypto-item:hover { border-color: rgba(0,229,200,0.3); background: rgba(0,229,200,0.04); }
+    .crypto-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .crypto-icon {
+      width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 700; font-family: var(--font-mono); flex-shrink: 0;
+    }
+    .btc { background: rgba(247,200,75,0.15); color: var(--gold); }
+    .eth { background: rgba(24,200,245,0.15);  color: var(--cyan); }
+    .crypto-info { flex: 1; }
+    .crypto-name  { display: block; font-size: 11px; color: var(--text-muted); }
+    .crypto-change { display: inline-block; font-size: 11px; font-weight: 600; }
+    .crypto-change.positive { color: var(--neon-green); }
+    .crypto-price { font-family: var(--font-mono); font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; }
+
+    /* ── 12. AI CHATBOT ────────────────────────── */
+    .chat-fab {
+      position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; border-radius: 18px;
+      background: linear-gradient(135deg, var(--teal), var(--cyan)); display: flex; align-items: center; justify-content: center;
+      color: #050d18; z-index: 499; box-shadow: 0 8px 28px rgba(0,229,200,0.45); transition: all var(--spring);
+    }
+    .chat-fab:hover { transform: scale(1.1) translateY(-2px); }
+    .chat-fab svg { width: 22px; height: 22px; }
+    .chat-fab.hidden { opacity: 0; pointer-events: none; transform: scale(0.8); }
+    .ai-chat {
+      position: fixed; bottom: 90px; right: 24px; width: 360px; max-height: 520px;
+      background: rgba(6, 14, 26, 0.92); border: 1px solid var(--glass-border); border-radius: 20px;
+      backdrop-filter: blur(24px); box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(0,229,200,0.1);
+      z-index: 500; display: flex; flex-direction: column; overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: bottom right;
+    }
+    .ai-chat.hidden { opacity: 0; transform: scale(0.85) translateY(20px); pointer-events: none; }
+    .chat-header {
+      display: flex; align-items: center; justify-content: space-between; padding: 16px 20px;
+      border-bottom: 1px solid var(--glass-border); cursor: pointer; flex-shrink: 0; background: rgba(0,229,200,0.04);
+    }
+    .chat-title { display: flex; align-items: center; gap: 12px; }
+    .ai-avatar-sm {
+      width: 36px; height: 36px; background: linear-gradient(135deg, var(--teal), var(--cyan));
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      font-weight: 800; color: #050d18; position: relative; flex-shrink: 0;
+    }
+    .chat-name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .chat-toggle { color: var(--text-muted); transition: all var(--transition); padding: 4px; }
+    .chat-toggle svg { width: 18px; height: 18px; }
+    .chat-body { flex: 1; min-height: 200px; padding: 20px 16px; color: var(--text-secondary); font-size: 14px; }
+
+    /* ── 13. RESPONSIVE ────────────────────────── */
+    @media (max-width: 1024px) {
+      .dashboard-grid { grid-template-columns: 1fr 1fr; }
+      .col-3 { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); width: var(--sidebar-w-expanded); }
+      .sidebar.open { transform: translateX(0); }
+      .hamburger { display: flex; }
+      .main-content { margin-left: 0; padding-top: 64px; }
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .col-3 { grid-template-columns: 1fr; }
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .kpi-row { grid-template-columns: 1fr; }
+    }
   </style>
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <!-- GSAP -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 </head>
 <body>
 
-<!-- Background ambience -->
-<div class="bg-canvas" aria-hidden="true">
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
-  <div class="blob blob-3"></div>
-  <div class="grid-overlay"></div>
-</div>
-
-<!-- ═══════════════════════════════════════ -->
-<!--  SIDEBAR                               -->
-<!-- ═══════════════════════════════════════ -->
-<aside class="sidebar" id="sidebar">
-  <div class="sidebar-logo">
-    <span class="logo-mark">S</span>
-    <span class="logo-text">SME<em>Pulse</em></span>
+  <div class="bg-canvas">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="grid-overlay"></div>
   </div>
 
-  <nav class="sidebar-nav" aria-label="Main navigation">
-    <a href="#" class="nav-item active" data-tooltip="Dashboard">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-      <span>Dashboard</span>
-    </a>
-    <a href="#" class="nav-item" data-tooltip="Analytics">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      <span>Analytics</span>
-    </a>
-    <a href="#" class="nav-item" data-tooltip="Portfolio">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-      <span>Portfolio</span>
-    </a>
-    <a href="#" class="nav-item" data-tooltip="Transactions">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-      <span>Transactions</span>
-    </a>
-    <a href="#" class="nav-item" data-tooltip="Cards">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-      <span>Cards</span>
-    </a>
-  </nav>
-
-  <div class="sidebar-bottom">
-    <a href="#" class="nav-item" data-tooltip="Settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-      <span>Settings</span>
-    </a>
-    <div class="sidebar-avatar">
-      <div class="avatar-ring">
-        <img src="https://api.dicebear.com/7.x/lorelei/svg?seed=pulse&backgroundColor=0d1b2a" alt="User avatar" />
-      </div>
-      <div class="avatar-info">
-        <span class="avatar-name">Alex Morgan</span>
-        <span class="avatar-role">Pro Plan</span>
-      </div>
-    </div>
+  <div id="hamburger" class="hamburger">
+    <span></span><span></span><span></span>
   </div>
-</aside>
 
-<!-- Hamburger -->
-<button class="hamburger" id="hamburger" aria-label="Toggle menu">
-  <span></span><span></span><span></span>
-</button>
-
-<!-- ═══════════════════════════════════════ -->
-<!--  MAIN CONTENT                          -->
-<!-- ═══════════════════════════════════════ -->
-<main class="main-content" id="main">
-
-  <!-- TOP BAR -->
-  <header class="topbar">
-    <div class="topbar-left">
-      <h1 class="page-title">Financial Overview</h1>
-      <p class="page-subtitle">Monday, 26 May 2026</p>
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">SP</div>
+      <div class="logo-text">SME <em>PULSE</em></div>
     </div>
-    <div class="topbar-right">
-      <div class="search-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" placeholder="Search transactions…" aria-label="Search" />
+    <ul class="sidebar-nav">
+      <li class="nav-item active">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+        <span>Dashboard</span>
+      </li>
+    </ul>
+    <div class="sidebar-bottom">
+      <div class="sidebar-avatar">
+        <div class="avatar-ring"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Faisal" alt="User"></div>
+        <div class="avatar-info">
+          <span class="avatar-name">Faisal A.</span>
+          <span class="avatar-role">CEO / Founder</span>
+        </div>
       </div>
-      <button class="icon-btn" aria-label="Notifications">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-        <span class="badge">3</span>
-      </button>
     </div>
-  </header>
+  </aside>
 
-  <!-- DASHBOARD GRID -->
-  <div class="dashboard-grid">
-
-    <!-- ── COLUMN 1: CARD + RECENT ACTIVITIES ── -->
-    <section class="col col-1">
-
-      <!-- Bank Card -->
-      <div class="card bank-card" data-tilt>
-        <div class="bank-card-header">
-          <div class="card-chip">
-            <div class="chip-lines"></div>
-          </div>
-          <div class="card-brand">
-            <span class="brand-dots">
-              <span></span><span></span>
-            </span>
-          </div>
-        </div>
-        <div class="bank-card-balance">
-          <p class="balance-label">Total Balance</p>
-          <h2 class="balance-amount" data-count="8244.00">$0.00</h2>
-        </div>
-        <div class="bank-card-footer">
-          <p class="card-number">2233 •••• •••• 9182</p>
-          <div class="card-meta">
-            <span class="card-holder">A. Morgan</span>
-            <span class="card-exp">09/28</span>
-          </div>
-        </div>
-        <div class="card-glow" aria-hidden="true"></div>
-      </div>
-
-      <!-- Recent Activities -->
-      <div class="card activities-card">
-        <div class="card-head">
-          <h3>Recent Activities</h3>
-          <button class="text-btn">See all</button>
-        </div>
-        <ul class="activity-list" id="activityList">
-          <li class="activity-item" data-amount="-14.00" data-status="debit">
-            <div class="activity-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
-            </div>
-            <div class="activity-info">
-              <span class="activity-name">Spotify</span>
-              <span class="activity-cat">Music Platform</span>
-            </div>
-            <span class="activity-amount debit">-$14.00</span>
-          </li>
-          <li class="activity-item" data-amount="-20.00" data-status="debit">
-            <div class="activity-icon apple">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-            </div>
-            <div class="activity-info">
-              <span class="activity-name">Apple Music</span>
-              <span class="activity-cat">Subscription</span>
-            </div>
-            <span class="activity-amount debit">-$20.00</span>
-          </li>
-          <li class="activity-item" data-amount="+350.00" data-status="credit">
-            <div class="activity-icon credit">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-            </div>
-            <div class="activity-info">
-              <span class="activity-name">Freelance</span>
-              <span class="activity-cat">Design Project</span>
-            </div>
-            <span class="activity-amount credit">+$350.00</span>
-          </li>
-          <li class="activity-item" data-amount="-89.99" data-status="debit">
-            <div class="activity-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            </div>
-            <div class="activity-info">
-              <span class="activity-name">Adobe CC</span>
-              <span class="activity-cat">Software</span>
-            </div>
-            <span class="activity-amount debit">-$89.99</span>
-          </li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- ── COLUMN 2: STATS + CHART ── -->
-    <section class="col col-2">
-      <!-- KPI Row -->
-      <div class="kpi-row">
-        <div class="kpi-card" data-tilt>
-          <div class="kpi-icon kpi-income">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          </div>
-          <div class="kpi-body">
-            <p class="kpi-label">Total Income</p>
-            <h3 class="kpi-value" data-count="12480">$0</h3>
-            <span class="kpi-change positive">+8.2%</span>
-          </div>
-        </div>
-        <div class="kpi-card" data-tilt>
-          <div class="kpi-icon kpi-expense">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
-          </div>
-          <div class="kpi-body">
-            <p class="kpi-label">Total Expenses</p>
-            <h3 class="kpi-value" data-count="4236">$0</h3>
-            <span class="kpi-change negative">-2.4%</span>
-          </div>
-        </div>
-        <div class="kpi-card" data-tilt>
-          <div class="kpi-icon kpi-savings">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 6v6l4 2"/></svg>
-          </div>
-          <div class="kpi-body">
-            <p class="kpi-label">Savings Rate</p>
-            <h3 class="kpi-value" data-count="66" data-suffix="%">0%</h3>
-            <span class="kpi-change positive">+5.1%</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Revenue Chart -->
-      <div class="card chart-card">
-        <div class="card-head">
-          <div>
-            <h3>Revenue Analytics</h3>
-            <p class="card-subtitle">Cash flow · Last 12 months</p>
-          </div>
-          <div class="chart-tabs">
-            <button class="tab-btn active" data-period="12m">12M</button>
-            <button class="tab-btn" data-period="6m">6M</button>
-            <button class="tab-btn" data-period="3m">3M</button>
-          </div>
-        </div>
-        <div class="chart-wrap">
-          <canvas id="revenueChart"></canvas>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── COLUMN 3: INVESTMENT + SEND MONEY ── -->
-    <section class="col col-3">
-
-      <!-- Investment Card -->
-      <div class="card investment-card">
-        <div class="card-head">
-          <h3>Investment</h3>
-          <span class="live-badge">
-            <span class="live-dot"></span>Live
-          </span>
-        </div>
-        <div class="crypto-grid">
-          <div class="crypto-item" data-tilt>
-            <div class="crypto-header">
-              <div class="crypto-icon btc">₿</div>
-              <div class="crypto-info">
-                <span class="crypto-name">BTC/USD</span>
-                <span class="crypto-change positive">+2.1%</span>
-              </div>
-            </div>
-            <h4 class="crypto-price" data-count="64100">$0</h4>
-            <div class="mini-chart-wrap">
-              <canvas id="btcMini"></canvas>
-            </div>
-          </div>
-          <div class="crypto-item" data-tilt>
-            <div class="crypto-header">
-              <div class="crypto-icon eth">Ξ</div>
-              <div class="crypto-info">
-                <span class="crypto-name">ETH/USD</span>
-                <span class="crypto-change positive">+4.5%</span>
-              </div>
-            </div>
-            <h4 class="crypto-price" data-count="4120.50">$0</h4>
-            <div class="mini-chart-wrap">
-              <canvas id="ethMini"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <!-- Burn Rate donut -->
-        <div class="burn-wrap">
-          <div class="burn-chart-wrap">
-            <canvas id="burnChart"></canvas>
-            <div class="burn-center">
-              <span class="burn-pct">66%</span>
-              <span class="burn-label">Runway</span>
-            </div>
-          </div>
-          <div class="burn-legend">
-            <div class="legend-item">
-              <span class="legend-dot teal"></span>
-              <span>Remaining</span>
-              <strong>$8.2k</strong>
-            </div>
-            <div class="legend-item">
-              <span class="legend-dot muted"></span>
-              <span>Burn Rate</span>
-              <strong>$4.2k</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Send Money -->
-      <div class="card send-card">
-        <div class="card-head">
-          <h3>Send Money</h3>
-        </div>
-        <div class="recipients">
-          <button class="recipient-btn add-btn" aria-label="Add recipient">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </button>
-          <button class="recipient-btn active" data-name="Sara" aria-label="Send to Sara">
-            <img src="https://api.dicebear.com/7.x/lorelei/svg?seed=Sara&backgroundColor=1e3a4a" alt="Sara" />
-          </button>
-          <button class="recipient-btn" data-name="Mike" aria-label="Send to Mike">
-            <img src="https://api.dicebear.com/7.x/lorelei/svg?seed=Mike&backgroundColor=1e3a4a" alt="Mike" />
-          </button>
-          <button class="recipient-btn" data-name="Lena" aria-label="Send to Lena">
-            <img src="https://api.dicebear.com/7.x/lorelei/svg?seed=Lena&backgroundColor=1e3a4a" alt="Lena" />
-          </button>
-        </div>
-        <div class="send-amount-wrap">
-          <p class="send-to-label">To: <strong id="sendToName">Sara</strong></p>
-          <div class="send-input-group">
-            <span class="currency-symbol">$</span>
-            <input type="number" class="send-input" id="sendInput" value="266" min="1" aria-label="Amount to send" />
-          </div>
-        </div>
-        <button class="send-btn magnetic" id="sendBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          Send Money
-        </button>
-      </div>
-    </section>
-
-  </div><!-- /dashboard-grid -->
-</main>
-
-<!-- ═══════════════════════════════════════ -->
-<!--  AI CHATBOT                            -->
-<!-- ═══════════════════════════════════════ -->
-<div class="ai-chat" id="aiChat">
-  <div class="chat-header" id="chatHeader">
-    <div class="chat-title">
-      <div class="ai-avatar-sm">
-        <span>S</span>
-        <span class="ai-status-dot"></span>
-      </div>
+  <main class="main-content">
+    <header class="topbar">
       <div>
-        <p class="chat-name">SME Pulse AI</p>
-        <p class="chat-online">Online · Ready</p>
+        <h1 class="page-title">Overview</h1>
+        <p class="page-subtitle">Welcome back, let's check your financial pulse.</p>
+      </div>
+    </header>
+
+    <div class="dashboard-grid">
+      <div class="col col-1">
+        <div class="card bank-card">
+          <div class="bank-card-header">
+            <div class="card-chip"></div>
+            <div class="brand-dots"><span></span><span></span></div>
+          </div>
+          <div>
+            <div class="balance-label">Total Balance</div>
+            <div class="balance-amount">$142,580.50</div>
+          </div>
+          <div class="bank-card-footer">
+            <div class="card-number">**** **** **** 4289</div>
+            <div class="card-meta">
+              <span class="card-holder">FAISAL</span>
+              <span class="card-exp">12/28</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col col-2">
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-icon kpi-income">💰</div>
+            <div class="kpi-body">
+              <div class="kpi-label">Income</div>
+              <div class="kpi-value">$12,480</div>
+              <div class="kpi-change positive">+8.2%</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon kpi-expense">🔥</div>
+            <div class="kpi-body">
+              <div class="kpi-label">Burn Rate</div>
+              <div class="kpi-value">$4,236</div>
+              <div class="kpi-change negative">-1.5%</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon kpi-savings">🏦</div>
+            <div class="kpi-body">
+              <div class="kpi-label">Savings</div>
+              <div class="kpi-value">$8,450</div>
+              <div class="kpi-change positive">+12%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col col-3">
+        <div class="card">
+          <div class="card-head">
+            <h3>Crypto Assets</h3>
+          </div>
+          <div class="crypto-grid">
+            <div class="crypto-item">
+              <div class="crypto-header">
+                <div class="crypto-icon btc">₿</div>
+                <div class="crypto-info">
+                  <span class="crypto-name">Bitcoin</span>
+                </div>
+              </div>
+              <div class="crypto-price">$64,100</div>
+            </div>
+            <div class="crypto-item">
+              <div class="crypto-header">
+                <div class="crypto-icon eth">Ξ</div>
+                <div class="crypto-info">
+                  <span class="crypto-name">Ethereum</span>
+                </div>
+              </div>
+              <div class="crypto-price">$4,120</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    <button class="chat-toggle" id="chatToggle" aria-label="Minimize chat">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
-    </button>
-  </div>
+  </main>
 
-  <div class="chat-body" id="chatBody">
-    <div class="chat-messages" id="chatMessages">
-      <div class="msg ai-msg" data-time="Just now">
-        <p>مرحباً! أنا مساعدك المالي الذكي. كيف أساعدك في تحليل سيولتك اليوم؟ 💡</p>
+  <button id="chatFab" class="chat-fab">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+  </button>
+
+  <div id="aiChat" class="ai-chat hidden">
+    <div id="chatHeader" class="chat-header">
+      <div class="chat-title">
+        <div class="ai-avatar-sm">AI</div>
+        <div class="chat-name">Pulse Assistant</div>
       </div>
+      <button id="chatToggle" class="chat-toggle">✕</button>
     </div>
-    <div class="typing-indicator" id="typingIndicator" aria-live="polite">
-      <span></span><span></span><span></span>
-    </div>
-  </div>
-
-  <div class="chat-footer">
-    <div class="chat-input-wrap">
-      <input type="text" class="chat-input" id="chatInput" placeholder="Ask about Burn Rate, Runway…" aria-label="Chat message" />
-      <button class="chat-send-btn" id="chatSendBtn" aria-label="Send message">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-      </button>
+    <div class="chat-body">
+      مرحباً بك! أنا مساعدك المالي الذكي.
     </div>
   </div>
-</div>
 
-<!-- Chat FAB (mobile / minimized) -->
-<button class="chat-fab" id="chatFab" aria-label="Open AI assistant">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-  <span class="fab-badge">AI</span>
-</button>
+  <script>
+    // الجوال: فتح وإغلاق القائمة
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    if(hamburger) {
+      hamburger.addEventListener('click', () => {
+        hamburger.classList.toggle('open');
+        sidebar.classList.toggle('open');
+      });
+    }
 
-<script src="js/script.js"></script>
+    // زر الشات
+    const chatFab = document.getElementById('chatFab');
+    const aiChat = document.getElementById('aiChat');
+    const chatToggle = document.getElementById('chatToggle');
+    if(chatFab && aiChat && chatToggle) {
+      chatFab.addEventListener('click', () => {
+        aiChat.classList.remove('hidden');
+        chatFab.classList.add('hidden');
+      });
+      chatToggle.addEventListener('click', () => {
+        aiChat.classList.add('hidden');
+        chatFab.classList.remove('hidden');
+      });
+    }
+  </script>
 </body>
 </html>
